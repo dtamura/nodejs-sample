@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nodejs-ingress
+  annotations:
+    networking.gke.io/managed-certificates: nodejs-mc
+    networking.gke.io/v1beta1.FrontendConfig: nodejs-frontendconfig
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  defaultBackend:
+    service:
+      name: nodejs-sample
+      port:
+        number: 3000
+  rules:
+    - host: api-demo.dev.ykhm.sre.sandbox-d3room.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nodejs-sample
+                port:
+                  number: 3000
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: nodejs-mc
+spec:
+  domains:
+    - api-demo.dev.ykhm.sre.sandbox-d3room.com
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: nodejs-frontendconfig
+spec:
+  sslPolicy: min-tls12-modern-policy

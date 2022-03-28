@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-sample
+spec:
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 5
+      maxUnavailable: 0
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodejs-sample
+  template:
+    metadata:
+      labels:
+        app: nodejs-sample
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: app
+          image: asia.gcr.io/dtamura-service01/nodejs/sample:0.1.1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DD_TRACE_AGENT_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_ENV
+              value: prod
+            - name: DD_SERVICE
+              value: nodejs-sample
+
+            # - name: SERVICE_VERSION
+            #   value: v-faulty
+            - name: ERROR_RATE
+              value: "0.01"
+
+            - name: NODE_ENV
+              value: production
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: 3000
+              scheme: HTTP
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
